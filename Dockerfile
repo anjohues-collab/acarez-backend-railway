@@ -1,13 +1,11 @@
 FROM php:8.2-apache
 
-# Instalar extensiones de MySQL
-RUN docker-php-ext-install pdo pdo_mysql mysqli
+# Eliminar el MPM event conflictivo y luego instalar las extensiones de MySQL
+RUN apt-get update && apt-get remove -y libapache2-mod-mpm-event libapache2-mod-mpm-worker || true \
+    && docker-php-ext-install pdo pdo_mysql mysqli
 
-# Solución definitiva para el error de múltiples MPM en Apache
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* \
-    && ln -s /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/ \
-    && ln -s /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/ \
-    && a2enmod rewrite
+# Habilitar mpm_prefork y rewrite de forma limpia
+RUN a2enmod mpm_prefork rewrite
 
 # Copiar todo el código
 COPY . /var/www/html/
