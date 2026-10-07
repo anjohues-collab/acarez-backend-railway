@@ -3,8 +3,11 @@ FROM php:8.2-apache
 # Instalar extensiones de MySQL
 RUN docker-php-ext-install pdo pdo_mysql mysqli
 
-# Habilitar mod_rewrite y solucionar el error de múltiples MPM en Apache
-RUN a2enmod rewrite && a2dismod mpm_event mpm_worker && a2enmod mpm_prefork
+# Solución definitiva para el error de múltiples MPM en Apache
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* \
+    && ln -s /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/ \
+    && ln -s /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/ \
+    && a2enmod rewrite
 
 # Copiar todo el código
 COPY . /var/www/html/
