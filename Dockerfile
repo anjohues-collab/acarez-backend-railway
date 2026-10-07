@@ -1,15 +1,20 @@
 FROM php:8.2-apache
 
-# Instalar extensiones de MySQL
+# 1. Esto fuerza a Railway a ignorar el caché viejo y construir desde cero
+ENV CACHE_BUSTER=1
+
+# 2. Instalar extensiones de MySQL
 RUN docker-php-ext-install pdo pdo_mysql mysqli
 
-# Habilitar mod_rewrite únicamente (mpm_prefork ya viene activo por defecto)
-RUN a2enmod rewrite
+# 3. Limpieza extrema: Borramos cualquier rastro de MPM y forzamos SOLO prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
+    && rm -f /etc/apache2/mods-enabled/mpm_*.conf \
+    && a2enmod mpm_prefork rewrite
 
-# Copiar todo el código
+# 4. Copiar todo tu código
 COPY . /var/www/html/
 
-# Crear directorios de uploads y asignar permisos a Apache
+# 5. Crear directorios de uploads y asignar permisos a Apache
 RUN mkdir -p /var/www/html/uploads/km_inicio \
     /var/www/html/uploads/km_fin \
     /var/www/html/uploads/hotel \
